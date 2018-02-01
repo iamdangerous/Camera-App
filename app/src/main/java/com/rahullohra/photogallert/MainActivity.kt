@@ -68,13 +68,15 @@ class MainActivity : AppCompatActivity() {
 
     fun launchCamera() {
 
-        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        val cameraIntent = Intent()
+        cameraIntent.action = (MediaStore.ACTION_IMAGE_CAPTURE)
 
         val photoFile = createImageFile()
-//        tempFile = createImageFileNew()
         if (photoFile != null) {
-            val photoURI = FileProvider.getUriForFile(this, "com.rahullohra.photogallert.fileprovider", photoFile)
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+            val authorities = applicationContext.packageName + ".fileprovider"
+            val photoURI = FileProvider.getUriForFile(this, authorities, photoFile)
+            Log.wtf(TAG, "uri = "+photoURI)
+            cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
 
             startActivityForResult(cameraIntent, MY_CAMERA_PICTURE)
         }
@@ -83,34 +85,15 @@ class MainActivity : AppCompatActivity() {
     @Throws(IOException::class)
     private fun createImageFile(): File {
         // Create an image file name
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val imageFileName = "IMAGE_" + timeStamp + "_"
+        val storageDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
 
-        val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        val imageFileName = "hola"
-//        val image = File.createTempFile(
-//                imageFileName, /* prefix */
-//                ".jpg", /* suffix */
-//                storageDir      /* directory */
-//        )
-
-        val image = File(storageDir,imageFileName+".jpg")
-
+        val image = File.createTempFile(imageFileName, ".jpg", storageDirectory)
         // Save a file: path for use with ACTION_VIEW intents
         mCurrentPhotoPath = image.absolutePath
-        Log.d(TAG, "storage path = " + mCurrentPhotoPath)
+        Log.wtf(TAG, "storage path = " + mCurrentPhotoPath)
         return image
-    }
-
-
-    fun launchCameraNew() {
-
-        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-//        val outputFile = File(Environment.getExternalStorageDirectory(), "hola.jpg")
-        val outputFile = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "hola.jpg")
-        val uri = Uri.fromFile(outputFile)
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
-
-        startActivityForResult(cameraIntent, MY_CAMERA_PICTURE)
-
     }
 
     fun fetchDirectories() {
@@ -155,7 +138,7 @@ class MainActivity : AppCompatActivity() {
             if (bm != null) {
                 Toast.makeText(this, "Got the bitmap", Toast.LENGTH_SHORT).show()
 //                addThisPicToGallery()
-                galleryAddPic()
+//                galleryAddPic()
                 show()
                 bg {
                     //                    saveImageToSDCard(bm)
@@ -236,7 +219,6 @@ class MainActivity : AppCompatActivity() {
         // Decode the image file into a Bitmap sized to fill the View
         bmOptions.inJustDecodeBounds = false
         bmOptions.inSampleSize = scaleFactor
-        bmOptions.inPurgeable = true
 
         val bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions)
         image.setImageBitmap(bitmap)
